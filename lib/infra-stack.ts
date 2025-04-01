@@ -117,8 +117,12 @@ export class InfraStack extends cdk.Stack {
     const demoCICDPipeline = new CodePipeline(this, 'demoCICDPipeline', {
       pipelineName: `cdkPipeline-${this.account}-${this.region}`,
       synth: new ShellStep('Synth', {
-        input: CodePipelineSource.gitHub('ankurksoni/api-lambda-s3-cdk', 'main'),
-        commands: ['npm ci', 'npm run build', 'cdk synth']
+        input: CodePipelineSource.connection('ankurksoni/api-lambda-s3-cdk', 'master',
+          {
+            connectionArn: 'arn:aws:codeconnections:us-east-1:698926940450:connection/e2e09884-14b7-495a-8420-e8d2fb58a5b9',
+          }
+        ),
+        commands: ['npm ci', 'npm run build', 'npx cdk synth']
       })
     })
   }
