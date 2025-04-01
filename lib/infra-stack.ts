@@ -4,8 +4,9 @@ import { Construct } from 'constructs';
 // import * as iam from 'aws-cdk-lib/aws-iam';
 // import * as lambda from 'aws-cdk-lib/aws-lambda';
 // import * as apiGateway from 'aws-cdk-lib/aws-apigateway';
-import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { readFileSync } from 'fs';
+// import * as ec2 from 'aws-cdk-lib/aws-ec2';
+// import { readFileSync } from 'fs';
+import {CodePipeline, CodePipelineSource, ShellStep} from 'aws-cdk-lib/pipelines'
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -56,57 +57,69 @@ export class InfraStack extends cdk.Stack {
     // const bankStatus = bankingRESTAPI.root.addResource('bankStatus');
     // bankStatus.addMethod('GET');
 
-    // VPC and SUBNETS
-    const vpc = new cdk.aws_ec2.Vpc(this, 'myVpc', {
-      vpcName: `myVpc-${this.account}-${this.region}`,
-      ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
-      natGateways: 0,
-    });
+    // LESSON 2
 
-    // SECURITY GROUP
-    const securityGroup = new ec2.SecurityGroup(this, 'mySecurityGroup', {
-      securityGroupName: `mySecurityGroup-${this.account}-${this.region}`,
-      vpc,
-      allowAllOutbound: true
-    });
-    securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP traffic from anywhere');
+    // // VPC and SUBNETS
+    // const vpc = new cdk.aws_ec2.Vpc(this, 'myVpc', {
+    //   vpcName: `myVpc-${this.account}-${this.region}`,
+    //   ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
+    //   natGateways: 0,
+    // });
 
-    let userDataScript: string;
-    try {
-        userDataScript = readFileSync('./lib/userdata.sh', 'utf-8');
-    } catch (error) {
-        console.error('Failed to read userdata script:', error);
+    // // SECURITY GROUP
+    // const securityGroup = new ec2.SecurityGroup(this, 'mySecurityGroup', {
+    //   securityGroupName: `mySecurityGroup-${this.account}-${this.region}`,
+    //   vpc,
+    //   allowAllOutbound: true
+    // });
+    // securityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(80), 'Allow HTTP traffic from anywhere');
+
+    // let userDataScript: string;
+    // try {
+    //     userDataScript = readFileSync('./lib/userdata.sh', 'utf-8');
+    // } catch (error) {
+    //     console.error('Failed to read userdata script:', error);
         
-        if (error instanceof Error) {
-            if ('code' in error && error.code === 'ENOENT') {
-                throw new Error('userdata.sh file not found. Please ensure the file exists in the lib directory.');
-            }
-            if ('code' in error && error.code === 'EACCES') {
-                throw new Error('Permission denied while reading userdata.sh file.');
-            }
-        }
+    //     if (error instanceof Error) {
+    //         if ('code' in error && error.code === 'ENOENT') {
+    //             throw new Error('userdata.sh file not found. Please ensure the file exists in the lib directory.');
+    //         }
+    //         if ('code' in error && error.code === 'EACCES') {
+    //             throw new Error('Permission denied while reading userdata.sh file.');
+    //         }
+    //     }
         
-        throw new Error('Failed to load userdata script. Please check file permissions and path.');
-    }
+    //     throw new Error('Failed to load userdata script. Please check file permissions and path.');
+    // }
     
-    if (!userDataScript || userDataScript.trim().length === 0) {
-        throw new Error('userdata script cannot be empty');
-    }
+    // if (!userDataScript || userDataScript.trim().length === 0) {
+    //     throw new Error('userdata script cannot be empty');
+    // }
 
-    const userData = ec2.UserData.forLinux();
-    userData.addCommands(userDataScript);
+    // const userData = ec2.UserData.forLinux();
+    // userData.addCommands(userDataScript);
 
-    const demoEC2 = new ec2.Instance(this, 'demoEC2', {
-      instanceName: `demoEC2-${this.account}-${this.region}`,
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
-      machineImage: ec2.MachineImage.latestAmazonLinux({
-          generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2
-      }),
-      vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      securityGroup,
-      keyName: 'demo_udemy',
-      userData
-    });
+    // const demoEC2 = new ec2.Instance(this, 'demoEC2', {
+    //   instanceName: `demoEC2-${this.account}-${this.region}`,
+    //   instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
+    //   machineImage: ec2.MachineImage.latestAmazonLinux({
+    //       generation: ec2.AmazonLinuxGeneration.AMAZON_LINUX_2
+    //   }),
+    //   vpc,
+    //   vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+    //   securityGroup,
+    //   keyName: 'demo_udemy',
+    //   userData
+    // });
+
+    // LESSON 3
+
+    const demoCICDPipeline = new CodePipeline(this, 'demoCICDPipeline', {
+      pipelineName: `cdkPipeline-${this.account}-${this.region}`,
+      synth: new ShellStep('Synth', {
+        input: CodePipelineSource.gitHub('ankurksoni/api-lambda-s3-cdk', 'main'),
+        commands: ['npm ci', 'npm run build', 'cdk synth']
+      })
+    })
   }
 }
