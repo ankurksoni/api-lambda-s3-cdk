@@ -113,17 +113,20 @@ export class InfraStack extends cdk.Stack {
     // });
 
     // LESSON 3
+    // Make sure that the github sync is present with the current AWS setup using AWS connection.
+    // Also have a secret key pair setup with key: github-tokens in AWS secret manager.
+    // Above value for the key will come from setting auth token setup through github --> developer settings --> classic etc.
 
-    const demoCICDPipeline = new CodePipeline(this, 'demoCICDPipeline', {
-      pipelineName: `cdkPipeline-${this.account}-${this.region}`,
-      synth: new ShellStep('Synth', {
-        input: CodePipelineSource.connection('ankurksoni/api-lambda-s3-cdk', 'master',
-          {
-            connectionArn: 'arn:aws:codeconnections:us-east-1:698926940450:connection/e2e09884-14b7-495a-8420-e8d2fb58a5b9',
-          }
-        ),
-        commands: ['npm ci', 'npm run build', 'npx cdk synth']
-      })
-    })
+    // const demoCICDPipeline = new CodePipeline(this, 'demoCICDPipeline', {
+    //   pipelineName: `cdkPipeline-${this.account}-${this.region}`,
+    //   synth: new ShellStep('Synth', {
+    //     input: CodePipelineSource.connection('ankurksoni/api-lambda-s3-cdk', 'master',
+    //       {
+    //         connectionArn: 'arn:aws:codeconnections:us-east-1:698926940450:connection/e2e09884-14b7-495a-8420-e8d2fb58a5b9',
+    //       }
+    //     ),
+    //     commands: ['npm ci', 'npm run build', 'npx cdk synth']
+    //   })
+    // })
   }
 }
